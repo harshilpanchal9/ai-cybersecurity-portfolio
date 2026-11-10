@@ -7,7 +7,7 @@
             "type": "String"
         },
         "connections_azuresentinel_externalid": {
-            "defaultValue": "/subscriptions/b0e76ccf-15a6-4542-9a21-bb691b63a1cb/resourceGroups/rg-ai-soc-lab/providers/Microsoft.Web/connections/azuresentinel",
+            "defaultValue": "/subscriptions/YOUR_SUBSCRIPTION_ID/resourceGroups/rg-ai-soc-lab/providers/Microsoft.Web/connections/azuresentinel",
             "type": "String"
         }
     },
@@ -114,7 +114,7 @@
                     "$connections": {
                         "value": {
                             "azuresentinel": {
-                                "id": "/subscriptions/b0e76ccf-15a6-4542-9a21-bb691b63a1cb/providers/Microsoft.Web/locations/canadacentral/managedApis/azuresentinel",
+                                "id": "/subscriptions/YOUR_SUBSCRIPTION_ID/providers/Microsoft.Web/locations/canadacentral/managedApis/azuresentinel",
                                 "connectionId": "[parameters('connections_azuresentinel_externalid')]",
                                 "connectionName": "azuresentinel",
                                 "connectionProperties": {}
