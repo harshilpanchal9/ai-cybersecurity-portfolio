@@ -1,0 +1,227 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workflows_ai_triage_copilot_name": {
+            "defaultValue": "ai-triage-copilot",
+            "type": "String"
+        },
+        "connections_azuresentinel_externalid": {
+            "defaultValue": "/subscriptions/b0e76ccf-15a6-4542-9a21-bb691b63a1cb/resourceGroups/rg-ai-soc-lab/providers/Microsoft.Web/connections/azuresentinel",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2019-05-01",
+            "name": "[parameters('workflows_ai_triage_copilot_name')]",
+            "location": "canadacentral",
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "metadata": {
+                        "notes": {}
+                    },
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        }
+                    },
+                    "triggers": {
+                        "Microsoft_Sentinel_incident": {
+                            "type": "ApiConnectionWebhook",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                    }
+                                },
+                                "body": {
+                                    "callback_url": "@listCallbackUrl()"
+                                },
+                                "path": "/incident-creation"
+                            },
+                            "conditions": []
+                        }
+                    },
+                    "actions": {
+                        "HTTP": {
+                            "runAfter": {},
+                            "type": "Http",
+                            "inputs": {
+                                "uri": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=YOUR_GEMINI_API_KEY",
+                                "method": "POST",
+                                "headers": {
+                                    "Content-Type": "application/json"
+                                },
+                                "body": {
+                                    "contents": [
+                                        {
+                                            "parts": [
+                                                {
+                                                    "text": "You are a Tier 1 SOC analyst assistant. Given this Microsoft Sentinel incident, produce a triage summary with: 1) What happened (plain language), 2) Severity justification, 3) Three concrete next investigation steps. Mark anything you are unsure about with [UNVERIFIED]. Do not invent entities not present below.\n\nIncident title: @{triggerBody()?['object']?['properties']?['title']}\nSeverity: @{triggerBody()?['object']?['properties']?['severity']}\nDescription: @{triggerBody()?['object']?['properties']?['description']}\nIncident number: @{triggerBody()?['object']?['properties']?['additionalData']?['mergedIncidentNumber']}"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            },
+                            "runtimeConfiguration": {
+                                "contentTransfer": {
+                                    "transferMode": "Chunked"
+                                }
+                            }
+                        },
+                        "Compose": {
+                            "runAfter": {
+                                "HTTP": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Compose",
+                            "inputs": "@body('HTTP')?['candidates'][0]?['content']?['parts'][0]?['text']"
+                        },
+                        "Add_comment_to_incident_(V3)": {
+                            "runAfter": {
+                                "Compose": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                    }
+                                },
+                                "method": "post",
+                                "body": {
+                                    "incidentArmId": "@triggerBody()?['object']?['id']",
+                                    "message": "<p class=\"editor-paragraph\">@{outputs('Compose')}</p>"
+                                },
+                                "path": "/Incidents/Comment"
+                            }
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {
+                            "azuresentinel": {
+                                "id": "/subscriptions/b0e76ccf-15a6-4542-9a21-bb691b63a1cb/providers/Microsoft.Web/locations/canadacentral/managedApis/azuresentinel",
+                                "connectionId": "[parameters('connections_azuresentinel_externalid')]",
+                                "connectionName": "azuresentinel",
+                                "connectionProperties": {}
+                            }
+                        }
+                    }
+                },
+                "endpointsConfiguration": {
+                    "workflow": {
+                        "outgoingIpAddresses": [
+                            {
+                                "address": "20.104.9.221"
+                            },
+                            {
+                                "address": "20.48.132.222"
+                            },
+                            {
+                                "address": "20.175.241.76"
+                            },
+                            {
+                                "address": "20.116.229.92"
+                            },
+                            {
+                                "address": "4.172.57.144"
+                            },
+                            {
+                                "address": "52.237.56.228"
+                            },
+                            {
+                                "address": "20.116.231.222"
+                            },
+                            {
+                                "address": "20.116.229.57"
+                            },
+                            {
+                                "address": "4.172.57.52"
+                            },
+                            {
+                                "address": "20.116.230.54"
+                            }
+                        ],
+                        "accessEndpointIpAddresses": [
+                            {
+                                "address": "20.175.241.90"
+                            },
+                            {
+                                "address": "20.116.229.122"
+                            },
+                            {
+                                "address": "4.172.59.88"
+                            },
+                            {
+                                "address": "52.237.58.32"
+                            },
+                            {
+                                "address": "20.116.231.233"
+                            },
+                            {
+                                "address": "20.116.229.68"
+                            },
+                            {
+                                "address": "4.172.57.90"
+                            },
+                            {
+                                "address": "20.116.230.165"
+                            }
+                        ]
+                    },
+                    "connector": {
+                        "outgoingIpAddresses": [
+                            {
+                                "address": "52.237.32.212"
+                            },
+                            {
+                                "address": "52.237.24.126"
+                            },
+                            {
+                                "address": "13.71.170.208/28"
+                            },
+                            {
+                                "address": "13.71.175.160/27"
+                            },
+                            {
+                                "address": "20.48.200.192/27"
+                            },
+                            {
+                                "address": "20.48.200.224/28"
+                            },
+                            {
+                                "address": "40.82.184.43"
+                            },
+                            {
+                                "address": "40.82.184.6"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Logic/workflows/accessKeys",
+            "apiVersion": "2015-02-01-preview",
+            "name": "[concat(parameters('workflows_ai_triage_copilot_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Logic/workflows', parameters('workflows_ai_triage_copilot_name'))]"
+            ],
+            "properties": {}
+        }
+    ]
+}
