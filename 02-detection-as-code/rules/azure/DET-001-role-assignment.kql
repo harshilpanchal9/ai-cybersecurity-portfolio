@@ -1,0 +1,9 @@
+// DET-001: Azure Role Assignment Created
+// MITRE ATT&CK: T1098.003 (Account Manipulation: Additional Cloud Roles)
+// Data source: AzureActivity (Azure Activity connector)
+// Status value confirmed in this tenant: "Success".
+AzureActivity
+| where OperationNameValue =~ "Microsoft.Authorization/roleAssignments/write"
+| where ActivityStatusValue == "Success"
+| project TimeGenerated, Caller, CallerIpAddress, ResourceGroup, ResourceId, Properties
+| sort by TimeGenerated desc

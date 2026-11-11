@@ -1,0 +1,22 @@
+title: Azure Role Assignment Created
+id: cc379992-f9a8-4b8b-8a6d-01d2c0a101f9
+status: test
+description: Detects the creation of a new Azure RBAC role assignment. Granting a role, especially Owner, Contributor, or User Access Administrator, is a primary privilege-escalation and persistence mechanism in the cloud. It survives password resets and is easy to overlook.
+references:
+  - https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
+author: Harshil Panchal
+logsource:
+  product: azure
+  service: activitylogs
+detection:
+  selection:
+    OperationNameValue: 'Microsoft.Authorization/roleAssignments/write'
+    ActivityStatusValue: 'Success'
+  condition: selection
+falsepositives:
+  - Legitimate role grants by administrators
+level: medium
+tags:
+  - attack.privilege_escalation
+  - attack.persistence
+  - attack.t1098.003
